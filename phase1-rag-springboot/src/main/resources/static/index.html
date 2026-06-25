@@ -32,13 +32,18 @@
         header h1 { font-size: 18px; font-weight: 600; }
         header p { font-size: 13px; color: #86868b; margin-top: 2px; }
         #clearBtn {
-            padding: 8px 16px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
             background: #f5f5f7;
             border: 1px solid #d2d2d7;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 18px;
             cursor: pointer;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         #clearBtn:hover { background: #e8e8ed; }
         #chat {
@@ -214,6 +219,7 @@
             header { padding: 12px 16px; }
             header h1 { font-size: 18px; }
             header p { font-size: 12px; }
+            #clearBtn { width: 36px; height: 36px; font-size: 16px; }
             #chat { padding: 12px; }
             #welcome { padding: 20px 12px; }
             #welcome .logo { font-size: 36px; }
@@ -238,7 +244,7 @@
             <h1>🦉 AI 知识问答助手</h1>
             <p>基于知识库的智能问答系统 · RAG + Agent · by Chloe</p>
         </div>
-        <button id="clearBtn">🗑️ 清空对话</button>
+        <button id="clearBtn" title="清空对话">🗑️</button>
     </header>
     <div id="chat"></div>
     <footer>
