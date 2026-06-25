@@ -56,11 +56,12 @@ public class DocumentService {
             log.info("应用启动：开始自动摄入知识库文档");
 
             // jar 包内无法使用通配符，显式列出所有文档文件名
+            // 文件名使用英文避免 Linux 容器编码问题
             String[] documentFiles = {
-                "documents/01-学习日志-完整记录.md",
-                "documents/02-第二阶段总结-流式多轮Agent.md",
-                "documents/03-RAG原理详解.md",
-                "documents/04-项目说明文档.md"
+                "documents/learning-log.md",
+                "documents/phase2-agent-summary.md",
+                "documents/rag-explained.md",
+                "documents/project-readme.md"
             };
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
