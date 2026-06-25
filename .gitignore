@@ -1,0 +1,35 @@
+# ===== 系统文件 =====
+.DS_Store
+**/.DS_Store
+
+# ===== Java / Maven =====
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# ===== 密钥 / 本地配置（重要！不能提交）=====
+**/application-local.yml
+**/*.env
+.env
+
+# ===== 数据 / 运行时产物 =====
+**/data/qdrant_storage/
+**/data/embeddings/
+**/data/documents/*.backup.*
+# 注意：data/documents/*.md（知识库文档）会被提交
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== Claude 本地配置 =====
+.claude/

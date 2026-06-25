@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rag-doc-assistant
+
+# AI 配置
+ai:
+  anthropic:
+    auth-token: ${ANTHROPIC_AUTH_TOKEN:}
+    base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com}
+    model: claude-haiku-4-5
+    max-tokens: 1000
+
+# 文档配置
+documents:
+  storage-path: ./data/documents
+  chunk-size: 500  # 文档分块大小（字符数）—— 平衡值：能装下完整配置段
+  chunk-overlap: 50  # 分块重叠（字符数）
+
+# RAG 配置
+rag:
+  max-results: 3    # 检索返回的最大文档片段数 —— 给 LLM 足够兜底空间
+  min-score: 0.7    # 最低相似度阈值 —— 中文模型分数普遍 0.8+，0.7 能过滤噪音

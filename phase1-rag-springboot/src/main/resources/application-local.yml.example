@@ -1,0 +1,13 @@
+# 本地配置模板 - 复制此文件为 application-local.yml 并填入真实配置
+#
+# 步骤：
+#   1. cp application-local.yml.example application-local.yml
+#   2. 编辑 application-local.yml，填入你的 API Key
+#   3. 启动：mvn spring-boot:run -Dspring-boot.run.profiles=local
+#
+# 注意：application-local.yml 已在 .gitignore 中，不会被提交
+
+ai:
+  anthropic:
+    api-key: sk-ant-api03-xxxxxx     # 你的 Anthropic API Key
+    base-url: https://api.anthropic.com  # 默认官方地址，如用代理则修改

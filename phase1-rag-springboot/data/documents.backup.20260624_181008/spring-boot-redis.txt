@@ -1,0 +1,218 @@
+Spring Boot 集成 Redis 缓存
+
+Redis 是一个高性能的内存键值存储系统，常用于缓存、会话管理、消息队列等场景。
+
+一、添加依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+<!-- 使用 Lettuce 客户端（默认） -->
+<dependency>
+    <groupId>io.lettuce</groupId>
+    <artifactId>lettuce-core</artifactId>
+</dependency>
+```
+
+二、基础配置
+
+application.yml 配置：
+```yaml
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8    # 连接池最大连接数
+        max-idle: 8      # 最大空闲连接
+        min-idle: 2      # 最小空闲连接
+        max-wait: -1ms   # 连接池最大阻塞等待时间
+```
+
+三、使用 Spring Cache 注解
+
+1. 启用缓存
+```java
+@SpringBootApplication
+@EnableCaching
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
+
+2. 缓存注解使用
+```java
+@Service
+public class UserService {
+
+    // 缓存结果，key 为方法参数
+    @Cacheable(value = "users", key = "#userId")
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId).orElse(null);
+    }
+
+    // 更新缓存
+    @CachePut(value = "users", key = "#user.id")
+    public User updateUser(User user) {
+        return userRepository.save(user);
+    }
+
+    // 删除缓存
+    @CacheEvict(value = "users", key = "#userId")
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
+    }
+
+    // 删除所有缓存
+    @CacheEvict(value = "users", allEntries = true)
+    public void clearCache() {
+        // 清空缓存
+    }
+}
+```
+
+四、自定义缓存配置
+
+```java
+@Configuration
+public class RedisConfig {
+
+    @Bean
+    public RedisCacheConfiguration cacheConfiguration() {
+        return RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(10))  // 缓存过期时间
+                .disableCachingNullValues()        // 不缓存 null 值
+                .serializeKeysWith(
+                    RedisSerializationContext.SerializationPair
+                        .fromSerializer(new StringRedisSerializer())
+                )
+                .serializeValuesWith(
+                    RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer())
+                );
+    }
+}
+```
+
+五、直接使用 RedisTemplate
+
+```java
+@Service
+public class RedisService {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    // 设置值
+    public void set(String key, Object value) {
+        redisTemplate.opsForValue().set(key, value);
+    }
+
+    // 设置值并指定过期时间
+    public void setWithExpire(String key, Object value, long timeout, TimeUnit unit) {
+        redisTemplate.opsForValue().set(key, value, timeout, unit);
+    }
+
+    // 获取值
+    public Object get(String key) {
+        return redisTemplate.opsForValue().get(key);
+    }
+
+    // 删除键
+    public void delete(String key) {
+        redisTemplate.delete(key);
+    }
+
+    // 判断键是否存在
+    public boolean hasKey(String key) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
+}
+```
+
+六、缓存策略
+
+1. Cache-Aside（旁路缓存）
+- 读：先查缓存，未命中则查数据库，然后写入缓存
+- 写：先更新数据库，再删除缓存
+
+2. Read-Through / Write-Through
+- 由缓存层统一管理数据的读写
+
+3. Write-Behind（异步写入）
+- 先写缓存，异步批量写入数据库
+
+七、缓存穿透、击穿、雪崩问题
+
+1. 缓存穿透（查询不存在的数据）
+解决方案：
+- 缓存空值（设置较短的过期时间）
+- 使用布隆过滤器
+
+2. 缓存击穿（热点数据过期）
+解决方案：
+- 热点数据永不过期
+- 加分布式锁
+
+3. 缓存雪崩（大量缓存同时过期）
+解决方案：
+- 随机过期时间
+- 多级缓存
+- 限流降级
+
+八、最佳实践
+
+1. 合理设置过期时间
+- 根据数据更新频率设置
+- 添加随机值避免集中过期
+
+2. 序列化选择
+- JSON: 可读性好，跨语言
+- Protobuf: 性能高，体积小
+
+3. 缓存 Key 设计
+- 使用统一前缀：project:module:entity:id
+- 便于批量删除和监控
+
+4. 监控指标
+- 缓存命中率
+- 内存使用率
+- 连接池状态
+
+5. 避免缓存大 key
+- 单个 key 不超过 10KB
+- 使用 hash 结构拆分大对象
+
+九、集群配置
+
+Redis Cluster 配置：
+```yaml
+spring:
+  redis:
+    cluster:
+      nodes:
+        - 192.168.1.1:6379
+        - 192.168.1.2:6379
+        - 192.168.1.3:6379
+      max-redirects: 3
+```
+
+Redis Sentinel 配置：
+```yaml
+spring:
+  redis:
+    sentinel:
+      master: mymaster
+      nodes:
+        - 192.168.1.1:26379
+        - 192.168.1.2:26379
+        - 192.168.1.3:26379
+```
