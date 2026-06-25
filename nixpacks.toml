@@ -1,0 +1,3 @@
+# Nixpacks 构建配置：显式指定 Java 17 + Maven
+[phases.setup]
+nixPkgs = ["jdk17", "maven"]
