@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -45,15 +46,27 @@ public class DocumentService {
     private Integer chunkOverlap;
 
     /**
-     * 应用启动时自动摄入知识库文档
+     * 应用启动时触发异步摄入
      *
-     * 从 classpath 读取 resources/documents/ 下的所有文档
-     * jar 包内无法使用通配符，需要显式列出文件名
+     * @PostConstruct 启动时调用，但立刻返回（不阻塞启动）
+     * 实际摄入在后台异步执行，避免 Railway 启动超时
      */
     @PostConstruct
-    public void autoIngestOnStartup() {
+    public void scheduleAutoIngest() {
+        log.info("应用启动完成，准备异步摄入知识库文档");
+        asyncIngestDocuments();
+    }
+
+    /**
+     * 异步摄入知识库文档
+     *
+     * 在后台线程执行，不阻塞应用启动
+     * 摄入完成前，用户提问会返回"知识库加载中"
+     */
+    @Async
+    public void asyncIngestDocuments() {
         try {
-            log.info("应用启动：开始自动摄入知识库文档");
+            log.info("后台开始摄入知识库文档");
 
             // jar 包内无法使用通配符，显式列出所有文档文件名
             // 文件名使用英文避免 Linux 容器编码问题
@@ -104,13 +117,13 @@ public class DocumentService {
             }
 
             if (successCount > 0) {
-                log.info("自动摄入完成，成功处理 {} 个文档", successCount);
+                log.info("知识库摄入完成，成功处理 {} 个文档", successCount);
             } else {
-                log.error("自动摄入失败：没有成功摄入任何文档");
+                log.error("知识库摄入失败：没有成功摄入任何文档");
             }
 
         } catch (Exception e) {
-            log.error("自动摄入异常（应用会继续启动，但知识库为空）", e);
+            log.error("知识库摄入异常", e);
         }
     }
 
