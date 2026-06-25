@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${PORT:8080}    # 读环境变量 PORT（Railway 会注入），本地默认 8080
 
 spring:
   application:
