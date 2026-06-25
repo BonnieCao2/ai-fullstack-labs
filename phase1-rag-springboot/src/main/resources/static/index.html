@@ -187,20 +187,6 @@
         #welcome h2 { font-size: 24px; margin-bottom: 8px; }
         #welcome .subtitle { color: #86868b; font-size: 15px; margin-bottom: 32px; }
         #welcome .examples-title { font-size: 13px; color: #86868b; margin-bottom: 12px; }
-        /* 功能介绍卡片 */
-        .feature-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
-            justify-content: center;
-        }
-        .feature {
-            flex: 1;
-            max-width: 180px;
-        }
-        .feature-icon { font-size: 28px; margin-bottom: 6px; }
-        .feature-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-        .feature-desc { font-size: 12px; color: #86868b; line-height: 1.4; }
         .example-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -233,9 +219,6 @@
             #welcome .logo { font-size: 36px; }
             #welcome h2 { font-size: 20px; }
             #welcome .subtitle { font-size: 13px; }
-            /* 功能卡片纵向排列 */
-            .feature-row { flex-direction: column; gap: 12px; }
-            .feature { max-width: 100%; }
             /* 示例问题纵向排列 */
             .example-grid { grid-template-columns: 1fr; }
             .example-card { font-size: 13px; padding: 12px; }
@@ -285,23 +268,6 @@
                     <div class="logo">🦉</div>
                     <h2>AI 知识问答助手</h2>
                     <p class="subtitle">基于知识库的智能问答系统 · 能记住对话、自主调用工具<br>当前知识库：Chloe 的 AI 全栈学习笔记</p>
-                    <div class="feature-row">
-                        <div class="feature">
-                            <div class="feature-icon">📚</div>
-                            <div class="feature-name">知识库问答</div>
-                            <div class="feature-desc">基于文档检索回答，有依据不瞎编</div>
-                        </div>
-                        <div class="feature">
-                            <div class="feature-icon">💬</div>
-                            <div class="feature-name">多轮对话</div>
-                            <div class="feature-desc">记住上下文，支持"它/这个"追问</div>
-                        </div>
-                        <div class="feature">
-                            <div class="feature-icon">🛠️</div>
-                            <div class="feature-name">智能体 Agent</div>
-                            <div class="feature-desc">自己判断、调用工具完成任务</div>
-                        </div>
-                    </div>
                     <p class="examples-title">试试这些问题 ↓</p>
                     <div class="example-grid">
                         <div class="example-card" data-q="什么是 RAG 的天花板？">
