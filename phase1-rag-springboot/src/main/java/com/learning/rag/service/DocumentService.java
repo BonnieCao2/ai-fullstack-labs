@@ -12,10 +12,13 @@ import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -44,22 +47,54 @@ public class DocumentService {
     /**
      * 应用启动时自动摄入知识库文档
      *
-     * 部署上线时确保向量库有内容，开箱即用
-     * 本地开发如果文档有变化，重启应用会重新摄入
+     * 从 classpath 读取 resources/documents/ 下的所有 .md 文件
+     * 这样打包成 jar 后也能正常加载
      */
     @PostConstruct
     public void autoIngestOnStartup() {
         try {
-            String defaultPath = "./data/documents";
-            File directory = new File(defaultPath);
+            log.info("应用启动：开始自动摄入知识库文档（classpath:documents/*.md）");
 
-            if (directory.exists() && directory.isDirectory()) {
-                log.info("应用启动：自动摄入知识库文档（{}）", defaultPath);
-                ingestDirectory(defaultPath);
-                log.info("自动摄入完成");
-            } else {
-                log.warn("知识库目录不存在：{}，跳过自动摄入", defaultPath);
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = resolver.getResources("classpath:documents/*.md");
+
+            if (resources.length == 0) {
+                log.warn("未找到知识库文档（classpath:documents/*.md），跳过自动摄入");
+                return;
             }
+
+            log.info("找到 {} 个文档，开始摄入", resources.length);
+
+            for (Resource resource : resources) {
+                try {
+                    String filename = resource.getFilename();
+                    log.info("摄入文档: {}", filename);
+
+                    // 从 InputStream 读取文档内容
+                    try (InputStream inputStream = resource.getInputStream()) {
+                        String content = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        Document document = Document.from(content);
+
+                        // 配置分块器
+                        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, chunkOverlap);
+
+                        // 配置摄入器
+                        EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
+                                .documentSplitter(splitter)
+                                .embeddingModel(embeddingModel)
+                                .embeddingStore(embeddingStore)
+                                .build();
+
+                        ingestor.ingest(document);
+                        log.info("文档摄入成功: {}", filename);
+                    }
+                } catch (Exception e) {
+                    log.error("摄入文档失败: {}", resource.getFilename(), e);
+                }
+            }
+
+            log.info("自动摄入完成，共处理 {} 个文档", resources.length);
+
         } catch (Exception e) {
             log.error("自动摄入失败（应用会继续启动，但知识库为空）", e);
         }
