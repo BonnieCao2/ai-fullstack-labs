@@ -47,26 +47,34 @@ public class DocumentService {
     /**
      * 应用启动时自动摄入知识库文档
      *
-     * 从 classpath 读取 resources/documents/ 下的所有 .md 文件
-     * 这样打包成 jar 后也能正常加载
+     * 从 classpath 读取 resources/documents/ 下的所有文档
+     * jar 包内无法使用通配符，需要显式列出文件名
      */
     @PostConstruct
     public void autoIngestOnStartup() {
         try {
-            log.info("应用启动：开始自动摄入知识库文档（classpath:documents/*.md）");
+            log.info("应用启动：开始自动摄入知识库文档");
+
+            // jar 包内无法使用通配符，显式列出所有文档文件名
+            String[] documentFiles = {
+                "documents/01-学习日志-完整记录.md",
+                "documents/02-第二阶段总结-流式多轮Agent.md",
+                "documents/03-RAG原理详解.md",
+                "documents/04-项目说明文档.md"
+            };
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            Resource[] resources = resolver.getResources("classpath:documents/*.md");
+            int successCount = 0;
 
-            if (resources.length == 0) {
-                log.warn("未找到知识库文档（classpath:documents/*.md），跳过自动摄入");
-                return;
-            }
-
-            log.info("找到 {} 个文档，开始摄入", resources.length);
-
-            for (Resource resource : resources) {
+            for (String filePath : documentFiles) {
                 try {
+                    Resource resource = resolver.getResource("classpath:" + filePath);
+
+                    if (!resource.exists()) {
+                        log.warn("文档不存在: {}", filePath);
+                        continue;
+                    }
+
                     String filename = resource.getFilename();
                     log.info("摄入文档: {}", filename);
 
@@ -86,17 +94,22 @@ public class DocumentService {
                                 .build();
 
                         ingestor.ingest(document);
+                        successCount++;
                         log.info("文档摄入成功: {}", filename);
                     }
                 } catch (Exception e) {
-                    log.error("摄入文档失败: {}", resource.getFilename(), e);
+                    log.error("摄入文档失败: {}", filePath, e);
                 }
             }
 
-            log.info("自动摄入完成，共处理 {} 个文档", resources.length);
+            if (successCount > 0) {
+                log.info("自动摄入完成，成功处理 {} 个文档", successCount);
+            } else {
+                log.error("自动摄入失败：没有成功摄入任何文档");
+            }
 
         } catch (Exception e) {
-            log.error("自动摄入失败（应用会继续启动，但知识库为空）", e);
+            log.error("自动摄入异常（应用会继续启动，但知识库为空）", e);
         }
     }
 
