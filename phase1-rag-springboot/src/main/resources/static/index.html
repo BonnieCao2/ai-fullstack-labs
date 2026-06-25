@@ -223,6 +223,30 @@
             transform: translateY(-1px);
         }
         .example-card .icon { margin-right: 8px; }
+        /* === 响应式：手机端优化 === */
+        @media (max-width: 768px) {
+            header { padding: 12px 16px; }
+            header h1 { font-size: 18px; }
+            header p { font-size: 12px; }
+            #chat { padding: 12px; }
+            #welcome { padding: 20px 12px; }
+            #welcome .logo { font-size: 36px; }
+            #welcome h2 { font-size: 20px; }
+            #welcome .subtitle { font-size: 13px; }
+            /* 功能卡片纵向排列 */
+            .feature-row { flex-direction: column; gap: 12px; }
+            .feature { max-width: 100%; }
+            /* 示例问题纵向排列 */
+            .example-grid { grid-template-columns: 1fr; }
+            .example-card { font-size: 13px; padding: 12px; }
+            /* 消息气泡 */
+            .msg { max-width: 90%; font-size: 14px; padding: 10px 14px; }
+            /* 底部输入 */
+            footer { padding: 12px 16px; }
+            #question { font-size: 14px; padding: 10px 12px; }
+            #send { padding: 10px 16px; font-size: 14px; }
+            .tech-info { font-size: 11px; }
+        }
     </style>
 </head>
 <body>

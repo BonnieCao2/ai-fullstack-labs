@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,6 +40,30 @@ public class DocumentService {
 
     @Value("${documents.chunk-overlap}")
     private Integer chunkOverlap;
+
+    /**
+     * 应用启动时自动摄入知识库文档
+     *
+     * 部署上线时确保向量库有内容，开箱即用
+     * 本地开发如果文档有变化，重启应用会重新摄入
+     */
+    @PostConstruct
+    public void autoIngestOnStartup() {
+        try {
+            String defaultPath = "./data/documents";
+            File directory = new File(defaultPath);
+
+            if (directory.exists() && directory.isDirectory()) {
+                log.info("应用启动：自动摄入知识库文档（{}）", defaultPath);
+                ingestDirectory(defaultPath);
+                log.info("自动摄入完成");
+            } else {
+                log.warn("知识库目录不存在：{}，跳过自动摄入", defaultPath);
+            }
+        } catch (Exception e) {
+            log.error("自动摄入失败（应用会继续启动，但知识库为空）", e);
+        }
+    }
 
     /**
      * 摄入文档到向量存储
