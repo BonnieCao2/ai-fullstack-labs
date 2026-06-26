@@ -31,5 +31,13 @@ target/
 *.log
 logs/
 
+# ===== Python =====
+**/venv/
+**/__pycache__/
+*.pyc
+**/.pytest_cache/
+**/chroma_db/
+**/*.egg-info/
+
 # ===== Claude 本地配置 =====
 .claude/
