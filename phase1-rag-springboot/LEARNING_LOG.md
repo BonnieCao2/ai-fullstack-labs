@@ -267,6 +267,57 @@
 - 详见 `PHASE2_SUMMARY.md`
 
 ### 第3阶段目标（Week 5-6）
+- [x] 生产环境部署（Railway PaaS）
+- [x] 排查生产环境特有问题（jar 包资源加载、中文编码、启动超时）
+- [ ] 前端优化（响应式设计、错误处理）
+- [ ] 性能优化（缓存、批量向量化）
+- [ ] 持久化存储方案（Qdrant/Chroma）
+
+**进度**: 40% 🚧 - 已部署上线，后续优化中
+
+**第3阶段核心收获（部署实战）**：
+
+#### Railway 部署完整踩坑记录 ⚠️ 生产必读
+
+**部署前准备**：
+- 动态端口：`server.port: ${PORT:8080}` 读 Railway 注入的 PORT 环境变量
+- 子目录构建：`railway.json` 指定 buildCommand 和 startCommand（项目在 phase1-rag-springboot/ 子目录）
+- Java 版本：`nixpacks.toml` 指定 jdk17（避免版本不兼容）
+
+**坑 1：jar 包资源加载问题** 🔥
+- **现象**：本地能找到 `./data/documents/*.md`，Railway 部署后找不到
+- **根因**：文档在 `src/main/resources` 外，Maven 默认不打包；即使打包，jar 包内无法用文件系统路径访问
+- **解决**：
+  1. 文档移到 `src/main/resources/documents/`
+  2. 用 `PathMatchingResourcePatternResolver` 从 classpath 读取：`classpath:documents/xxx.md`
+  3. jar 包内不支持通配符（`*.md`），必须显式列出每个文件名
+
+**坑 2：中文文件名编码问题** 🔥
+- **现象**：`classpath:documents/01-学习日志.md` 本地能读，Railway 报 `FileNotFoundException`
+- **根因**：Railway Linux 容器的文件系统编码与 macOS 不同，中文文件名无法正确识别
+- **解决**：文件名全部改成英文（`learning-log.md`），这是 Linux 服务器部署的**标准做法**
+
+**坑 3：Railway 启动超时** 🔥🔥🔥
+- **现象**：应用启动 2 分钟后，Railway 报 "Application failed to respond"，杀掉进程
+- **根因**：`@PostConstruct` 同步摄入 4 个文档（7万字）需要 2+ 分钟，超过 Railway 健康检查超时（~2 分钟）
+- **解决**：
+  1. 改用 `@Async` 异步摄入（不阻塞启动）
+  2. 主类加 `@EnableAsync` 启用 Spring 异步支持
+  3. 应用 10 秒启动完成 → Railway 认为成功 → 后台继续摄入文档
+- **权衡**：启动后 1-2 分钟内知识库为空（用户会看到"没找到相关信息"），之后自动恢复
+
+**部署最佳实践总结**：
+1. **资源文件**：放 `src/main/resources`，用 classpath 读取，文件名用英文
+2. **重量级初始化**：异步执行，不阻塞启动（健康检查的通用解决方案）
+3. **环境变量**：端口、密钥等配置从环境变量读取（12-Factor App 原则）
+4. **日志观察**：Deploy Logs 是定位问题的关键，先看 ERROR，再看启动是否完成
+5. **本地验证**：`mvn clean package && java -jar target/*.jar` 模拟生产环境（不能只用 IDE 运行）
+
+**在线地址**：https://ai-fullstack-labs-production.up.railway.app/
+
+---
+
+### 第3阶段目标（Week 5-6）—— 原计划
 - [ ] Python 基础和 FastAPI 框架
 - [ ] Python AI 生态：LangChain、LlamaIndex
 - [ ] 对比 Java 和 Python 在 AI 开发中的优势
